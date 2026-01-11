@@ -7,3 +7,4 @@ dist/
 .env.local
 releases/
 agent/vps-probe-agent
+agent/vps-probe-agent-*
