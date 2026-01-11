@@ -65,7 +65,14 @@ fi
 
 # Download binary
 if [[ -z "$DOWNLOAD_URL" ]]; then
-  DOWNLOAD_URL="https://vps-probe-releases.pages.dev/linux/${BIN_NAME}-${ARCH}"
+  # Try GitHub releases first, fallback to raw.githubusercontent.com
+  REPO="1776686596/vps-probe"
+  RELEASE_URL="https://github.com/${REPO}/releases/latest/download/${BIN_NAME}-${ARCH}"
+  if curl -fsSL --head "$RELEASE_URL" &>/dev/null; then
+    DOWNLOAD_URL="$RELEASE_URL"
+  else
+    err "No release found. Please create a release first by pushing a tag (e.g., git tag v1.0.0 && git push --tags)"
+  fi
 fi
 
 log "Downloading agent from ${DOWNLOAD_URL}..."

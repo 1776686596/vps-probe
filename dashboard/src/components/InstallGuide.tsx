@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Copy, Check, Terminal, Plus } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || '/v1'
-const INSTALL_SCRIPT_URL = 'https://vps-probe-releases.pages.dev/install.sh'
+const INSTALL_SCRIPT_URL = 'https://raw.githubusercontent.com/1776686596/vps-probe/main/install.sh'
 
 export default function InstallGuide({ compact = false }: { compact?: boolean }) {
   const [copied, setCopied] = useState(false)

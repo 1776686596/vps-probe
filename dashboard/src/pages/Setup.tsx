@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Settings, Key, Copy, Check, ArrowRight } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || '/v1'
-const INSTALL_SCRIPT_URL = 'https://vps-probe-releases.pages.dev/install.sh'
+const INSTALL_SCRIPT_URL = 'https://raw.githubusercontent.com/1776686596/vps-probe/main/install.sh'
 const STORAGE_KEY = 'vps-probe-secret'
 
 export default function Setup() {

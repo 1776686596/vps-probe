@@ -73,12 +73,12 @@ jobs:
           EOF
 
       - name: Setup HMAC Secret
+        id: setup-secret
         run: |
           cd server
-          if ! npx wrangler secret list 2>/dev/null | grep -q PROBE_HMAC_SECRET; then
-            SECRET=$(openssl rand -hex 32)
-            echo "$SECRET" | npx wrangler secret put PROBE_HMAC_SECRET --yes
-          fi
+          SECRET=$(openssl rand -hex 32)
+          echo "$SECRET" | npx wrangler secret put PROBE_HMAC_SECRET --yes
+          echo "secret=$SECRET" >> $GITHUB_OUTPUT
 
       - name: Deploy Worker
         id: deploy-worker
@@ -109,10 +109,19 @@ jobs:
         run: |
           echo "## Deployment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **API**: ${{ steps.deploy-worker.outputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Dashboard**: ${{ steps.deploy-pages.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| API | ${{ steps.deploy-worker.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dashboard | ${{ steps.deploy-pages.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Visit Dashboard and enter your HMAC secret" >> $GITHUB_STEP_SUMMARY
-          echo "2. Copy the install command" >> $GITHUB_STEP_SUMMARY
-          echo "3. Run on your VPS" >> $GITHUB_STEP_SUMMARY
+          echo "### HMAC Secret (Save this!)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.setup-secret.outputs.secret }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Install Agent on VPS" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sudo bash -s -- \\\\" >> $GITHUB_STEP_SUMMARY
+          echo "  --url ${{ steps.deploy-worker.outputs.url }}/v1/ingest \\\\" >> $GITHUB_STEP_SUMMARY
+          echo "  --secret ${{ steps.setup-secret.outputs.secret }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

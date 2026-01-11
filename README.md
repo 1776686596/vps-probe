@@ -40,7 +40,7 @@ cd vps-probe
 复制 Dashboard 中的安装命令，或手动执行：
 
 ```bash
-curl -fsSL https://vps-probe-releases.pages.dev/install.sh | sudo bash -s -- \
+curl -fsSL https://raw.githubusercontent.com/1776686596/vps-probe/main/install.sh | sudo bash -s -- \
   --url https://your-worker.workers.dev/v1/ingest \
   --secret YOUR_SECRET
 ```
