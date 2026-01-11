@@ -84,7 +84,7 @@ jobs:
         run: |
           cd server
           SECRET=$(openssl rand -hex 32)
-          echo "$SECRET" | npx wrangler secret put PROBE_HMAC_SECRET --yes
+          echo "$SECRET" | npx wrangler secret put PROBE_HMAC_SECRET
           echo "secret=$SECRET" >> $GITHUB_OUTPUT
 
       - name: Deploy Worker
