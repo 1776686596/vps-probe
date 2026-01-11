@@ -21,38 +21,43 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: |
-            server/package-lock.json
-            dashboard/package-lock.json
+
+      - name: Install server dependencies
+        run: cd server && npm ci
 
       - name: Setup D1 Database
         id: setup-d1
         run: |
           cd server
-          npm ci
-          DB_OUTPUT=$(npx wrangler d1 create vps-probe 2>&1 || true)
+          DB_OUTPUT=$(npx wrangler d1 create vps-probe 2>&1) || true
+          echo "$DB_OUTPUT"
           if echo "$DB_OUTPUT" | grep -q "already exists"; then
             DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="vps-probe") | .uuid')
           else
-            DB_ID=$(echo "$DB_OUTPUT" | grep -oP 'database_id = "\K[^"]+')
+            DB_ID=$(echo "$DB_OUTPUT" | sed -n 's/.*database_id = "\([^"]*\)".*/\1/p')
           fi
           echo "db_id=$DB_ID" >> $GITHUB_OUTPUT
+          echo "Database ID: $DB_ID"
           npx wrangler d1 execute vps-probe --remote --file=schema.sql --yes || true
 
       - name: Setup KV Namespace
         id: setup-kv
         run: |
           cd server
-          KV_OUTPUT=$(npx wrangler kv:namespace create STATUS_KV 2>&1 || true)
+          KV_OUTPUT=$(npx wrangler kv:namespace create STATUS_KV 2>&1) || true
+          echo "$KV_OUTPUT"
           if echo "$KV_OUTPUT" | grep -q "already exists"; then
             KV_ID=$(npx wrangler kv:namespace list --json | jq -r '.[] | select(.title | contains("STATUS_KV")) | .id')
           else
-            KV_ID=$(echo "$KV_OUTPUT" | grep -oP 'id = "\K[^"]+')
+            KV_ID=$(echo "$KV_OUTPUT" | sed -n 's/.*id = "\([^"]*\)".*/\1/p')
           fi
           echo "kv_id=$KV_ID" >> $GITHUB_OUTPUT
+          echo "KV ID: $KV_ID"
 
       - name: Generate wrangler.toml
+        env:
+          DB_ID: ${{ steps.setup-d1.outputs.db_id }}
+          KV_ID: ${{ steps.setup-kv.outputs.kv_id }}
         run: |
           cat > server/wrangler.toml << EOF
           name = "vps-probe"
@@ -65,12 +70,14 @@ jobs:
           [[d1_databases]]
           binding = "DB"
           database_name = "vps-probe"
-          database_id = "${{ steps.setup-d1.outputs.db_id }}"
+          database_id = "${DB_ID}"
 
           [[kv_namespaces]]
           binding = "STATUS_KV"
-          id = "${{ steps.setup-kv.outputs.kv_id }}"
+          id = "${KV_ID}"
           EOF
+          sed -i 's/^          //' server/wrangler.toml
+          cat server/wrangler.toml
 
       - name: Setup HMAC Secret
         id: setup-secret
@@ -85,7 +92,8 @@ jobs:
         run: |
           cd server
           DEPLOY_OUTPUT=$(npx wrangler deploy 2>&1)
-          URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'https://[^\s]+workers\.dev' | head -1)
+          echo "$DEPLOY_OUTPUT"
+          URL=$(echo "$DEPLOY_OUTPUT" | grep -o 'https://[^[:space:]]*workers\.dev' | head -1)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Worker deployed to: $URL"
 
@@ -101,7 +109,8 @@ jobs:
           cd dashboard
           npx wrangler pages project create vps-probe-dashboard --production-branch main 2>/dev/null || true
           PAGES_OUTPUT=$(npx wrangler pages deploy dist --project-name vps-probe-dashboard --commit-dirty=true 2>&1)
-          URL=$(echo "$PAGES_OUTPUT" | grep -oP 'https://[^\s]+pages\.dev' | tail -1)
+          echo "$PAGES_OUTPUT"
+          URL=$(echo "$PAGES_OUTPUT" | grep -o 'https://[^[:space:]]*pages\.dev' | tail -1)
           echo "url=$URL" >> $GITHUB_OUTPUT
           echo "Dashboard deployed to: $URL"
 
