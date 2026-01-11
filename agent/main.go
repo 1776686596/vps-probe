@@ -43,11 +43,14 @@ type Payload struct {
 		DeltaTxBytes uint64 `json:"deltaTxBytes"`
 		TotalRxBytes uint64 `json:"totalRxBytes"`
 		TotalTxBytes uint64 `json:"totalTxBytes"`
+		RxSpeed      uint64 `json:"rxSpeed"`
+		TxSpeed      uint64 `json:"txSpeed"`
 	} `json:"bandwidth"`
 	Meta struct {
-		Version string `json:"version"`
-		OS      string `json:"os"`
-		Arch    string `json:"arch"`
+		Version  string `json:"version"`
+		OS       string `json:"os"`
+		Arch     string `json:"arch"`
+		Interval int    `json:"interval"`
 	} `json:"meta"`
 }
 
@@ -88,14 +91,24 @@ func report(ctx context.Context, client *http.Client, cfg Config, st *state.Stat
 	prev := st.Snap()
 	deltaRx, deltaTx, totalRx, totalTx, _ := st.Update(snap.BootTime, snap.NetRxBytes, snap.NetTxBytes)
 
+	intervalSec := int(cfg.Interval.Seconds())
+	var rxSpeed, txSpeed uint64
+	if intervalSec > 0 {
+		rxSpeed = deltaRx / uint64(intervalSec)
+		txSpeed = deltaTx / uint64(intervalSec)
+	}
+
 	payload := Payload{NodeID: cfg.NodeID, Hostname: cfg.Hostname, Snapshot: snap}
 	payload.Bandwidth.DeltaRxBytes = deltaRx
 	payload.Bandwidth.DeltaTxBytes = deltaTx
 	payload.Bandwidth.TotalRxBytes = totalRx
 	payload.Bandwidth.TotalTxBytes = totalTx
+	payload.Bandwidth.RxSpeed = rxSpeed
+	payload.Bandwidth.TxSpeed = txSpeed
 	payload.Meta.Version = version
 	payload.Meta.OS = runtime.GOOS
 	payload.Meta.Arch = runtime.GOARCH
+	payload.Meta.Interval = intervalSec
 
 	body, _ := json.Marshal(payload)
 	ts := strconv.FormatInt(time.Now().Unix(), 10)

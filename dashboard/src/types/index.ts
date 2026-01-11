@@ -7,6 +7,8 @@ export interface Node {
   disk: number
   net_rx_total: number
   net_tx_total: number
+  net_rx_speed: number
+  net_tx_speed: number
   uptime: number
   last_seen: number
 }

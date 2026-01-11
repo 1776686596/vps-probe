@@ -25,6 +25,7 @@ function isNode(v: unknown): v is Node {
     (v.status === 'online' || v.status === 'offline') &&
     isNum(v.cpu) && isNum(v.memory) && isNum(v.disk) &&
     isNum(v.net_rx_total) && isNum(v.net_tx_total) &&
+    isNum(v.net_rx_speed) && isNum(v.net_tx_speed) &&
     isNum(v.uptime) && isNum(v.last_seen)
   )
 }

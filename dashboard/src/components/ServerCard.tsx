@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, Clock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Node } from '../types'
-import { formatBytes, formatUptime } from '../lib/utils'
+import { formatBytes, formatSpeed, formatUptime } from '../lib/utils'
 import ProgressBar from './ProgressBar'
 import StatusBadge from './StatusBadge'
 
@@ -29,14 +29,20 @@ export default function ServerCard({ node }: Props) {
           <ProgressBar label="Disk" value={node.disk} color="bg-purple-500" />
         </div>
 
-        <div className="flex items-center justify-between border-t border-zinc-700/50 pt-4 text-xs text-zinc-400">
-          <div className="flex items-center gap-1.5">
-            <ArrowDown className="h-3.5 w-3.5 text-green-400" />
-            <span>{formatBytes(node.net_rx_total)}</span>
+        <div className="border-t border-zinc-700/50 pt-4 space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-green-400">
+              <ArrowDown className="h-3.5 w-3.5" />
+              <span className="font-medium">{formatSpeed(node.net_rx_speed)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-orange-400">
+              <ArrowUp className="h-3.5 w-3.5" />
+              <span className="font-medium">{formatSpeed(node.net_tx_speed)}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <ArrowUp className="h-3.5 w-3.5 text-orange-400" />
-            <span>{formatBytes(node.net_tx_total)}</span>
+          <div className="flex items-center justify-between text-xs text-zinc-500">
+            <span>↓ {formatBytes(node.net_rx_total)}</span>
+            <span>↑ {formatBytes(node.net_tx_total)}</span>
           </div>
         </div>
       </div>

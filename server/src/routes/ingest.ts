@@ -24,6 +24,8 @@ interface IngestPayload {
     deltaTxBytes: number
     totalRxBytes: number
     totalTxBytes: number
+    rxSpeed: number
+    txSpeed: number
   }
 }
 
@@ -63,6 +65,8 @@ function parsePayload(raw: unknown): IngestPayload | null {
   if (!isUint(bandwidth.deltaTxBytes)) return null
   if (!isUint(bandwidth.totalRxBytes)) return null
   if (!isUint(bandwidth.totalTxBytes)) return null
+  if (!isUint(bandwidth.rxSpeed)) return null
+  if (!isUint(bandwidth.txSpeed)) return null
 
   return {
     nodeId,
@@ -79,7 +83,9 @@ function parsePayload(raw: unknown): IngestPayload | null {
       deltaRxBytes: bandwidth.deltaRxBytes as number,
       deltaTxBytes: bandwidth.deltaTxBytes as number,
       totalRxBytes: bandwidth.totalRxBytes as number,
-      totalTxBytes: bandwidth.totalTxBytes as number
+      totalTxBytes: bandwidth.totalTxBytes as number,
+      rxSpeed: bandwidth.rxSpeed as number,
+      txSpeed: bandwidth.txSpeed as number
     }
   }
 }
@@ -165,6 +171,8 @@ app.post('/ingest', async (c) => {
       disk: snapshot.diskUsedPercent,
       net_rx_total: bandwidth.totalRxBytes,
       net_tx_total: bandwidth.totalTxBytes,
+      net_rx_speed: bandwidth.rxSpeed,
+      net_tx_speed: bandwidth.txSpeed,
       uptime: snapshot.uptimeSeconds,
       last_seen: nowMs
     }), { expirationTtl: ttl })
