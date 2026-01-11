@@ -11,8 +11,8 @@ export default function Dashboard() {
   const totalCount = nodes?.length ?? 0
   const totalRx = nodes?.reduce((sum, n) => sum + n.net_rx_total, 0) ?? 0
   const totalTx = nodes?.reduce((sum, n) => sum + n.net_tx_total, 0) ?? 0
-  const totalRxSpeed = nodes?.reduce((sum, n) => sum + n.net_rx_speed, 0) ?? 0
-  const totalTxSpeed = nodes?.reduce((sum, n) => sum + n.net_tx_speed, 0) ?? 0
+  const totalRxSpeed = nodes?.reduce((sum, n) => sum + (n.net_rx_speed ?? 0), 0) ?? 0
+  const totalTxSpeed = nodes?.reduce((sum, n) => sum + (n.net_tx_speed ?? 0), 0) ?? 0
 
   if (isLoading) {
     return (

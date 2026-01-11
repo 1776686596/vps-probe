@@ -31,12 +31,12 @@ export default function ServerCard({ node }: Props) {
             <div className="flex items-center gap-2">
               <ArrowDown className="h-4 w-4 text-green-400" />
               <span className="text-lg font-bold text-green-400 tabular-nums">
-                {formatSpeed(node.net_rx_speed)}
+                {formatSpeed(node.net_rx_speed ?? 0)}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-orange-400 tabular-nums">
-                {formatSpeed(node.net_tx_speed)}
+                {formatSpeed(node.net_tx_speed ?? 0)}
               </span>
               <ArrowUp className="h-4 w-4 text-orange-400" />
             </div>

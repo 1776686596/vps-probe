@@ -1,24 +1,41 @@
-import { useState } from 'react'
-import { Copy, Check, Terminal, Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Copy, Check, Terminal, Plus, Loader2 } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || '/v1'
-const INSTALL_SCRIPT_URL = 'https://raw.githubusercontent.com/1776686596/vps-probe/main/install.sh'
+
+interface InstallInfo {
+  command: string
+  api_url: string
+  secret: string
+}
 
 export default function InstallGuide({ compact = false }: { compact?: boolean }) {
   const [copied, setCopied] = useState(false)
   const [show, setShow] = useState(!compact)
-  const [secret, setSecret] = useState('')
+  const [installInfo, setInstallInfo] = useState<InstallInfo | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const ingestUrl = API_URL.startsWith('http')
-    ? `${API_URL}/ingest`
-    : `${window.location.origin}${API_URL}/ingest`
-
-  const command = `curl -fsSL ${INSTALL_SCRIPT_URL} | sudo bash -s -- \\
-  --url ${ingestUrl} \\
-  --secret ${secret || '<YOUR_HMAC_SECRET>'}`
+  useEffect(() => {
+    if (show && !installInfo) {
+      setLoading(true)
+      setError(null)
+      fetch(`${API_URL}/install`)
+        .then(res => res.json())
+        .then(data => {
+          setInstallInfo(data)
+          setLoading(false)
+        })
+        .catch(() => {
+          setError('Failed to load install command')
+          setLoading(false)
+        })
+    }
+  }, [show, installInfo])
 
   const copyCommand = async () => {
-    await navigator.clipboard.writeText(command)
+    if (!installInfo) return
+    await navigator.clipboard.writeText(installInfo.command)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -36,7 +53,7 @@ export default function InstallGuide({ compact = false }: { compact?: boolean })
   }
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-800/50 p-6 max-w-2xl mx-auto">
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-green-500/10 p-2 text-green-400">
@@ -58,37 +75,34 @@ export default function InstallGuide({ compact = false }: { compact?: boolean })
         Run this command on your VPS to start monitoring:
       </p>
 
-      <div className="mb-4">
-        <label className="block text-xs text-zinc-500 mb-1">HMAC Secret</label>
-        <input
-          type="text"
-          value={secret}
-          onChange={(e) => setSecret(e.target.value)}
-          placeholder="Enter your HMAC secret"
-          className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-zinc-200 text-sm placeholder:text-zinc-600 focus:outline-none focus:border-blue-500"
-        />
-        <p className="text-xs text-zinc-600 mt-1">
-          The secret configured in your Cloudflare Worker
-        </p>
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-8 text-zinc-500">
+          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          Loading...
+        </div>
+      ) : error ? (
+        <div className="text-red-400 text-sm py-4">{error}</div>
+      ) : installInfo ? (
+        <>
+          <div className="relative">
+            <pre className="bg-zinc-950 rounded-lg p-4 text-sm text-zinc-300 overflow-x-auto font-mono whitespace-pre-wrap break-all">
+              {installInfo.command}
+            </pre>
+            <button
+              onClick={copyCommand}
+              className="absolute top-2 right-2 p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition"
+              title="Copy to clipboard"
+            >
+              {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+            </button>
+          </div>
 
-      <div className="relative">
-        <pre className="bg-zinc-900 rounded-lg p-4 text-sm text-zinc-300 overflow-x-auto font-mono">
-          {command}
-        </pre>
-        <button
-          onClick={copyCommand}
-          className="absolute top-2 right-2 p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition"
-          title="Copy to clipboard"
-        >
-          {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
-        </button>
-      </div>
-
-      <div className="mt-4 text-xs text-zinc-500 space-y-1">
-        <p>After installation, the agent will start reporting metrics every 10 seconds.</p>
-        <p>Manage service: <code className="text-zinc-400">systemctl status vps-probe-agent</code></p>
-      </div>
+          <div className="mt-4 text-xs text-zinc-500 space-y-1">
+            <p>After installation, the agent will start reporting metrics every 10 seconds.</p>
+            <p>Manage service: <code className="text-zinc-400">systemctl status vps-probe-agent</code></p>
+          </div>
+        </>
+      ) : null}
     </div>
   )
 }

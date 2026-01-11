@@ -18,6 +18,20 @@ app.get('/', (c) => c.json({ service: 'vps-probe', status: 'ok' }))
 app.route('/v1', ingestRoutes)
 app.route('/v1', nodesRoutes)
 
+// Install command endpoint
+app.get('/v1/install', (c) => {
+  const secret = c.env.PROBE_HMAC_SECRET
+  const baseUrl = new URL(c.req.url)
+  const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/v1/ingest`
+  const scriptUrl = 'https://raw.githubusercontent.com/1776686596/vps-probe/main/install.sh'
+
+  return c.json({
+    command: `curl -fsSL ${scriptUrl} | sudo bash -s -- --url ${apiUrl} --secret ${secret}`,
+    api_url: apiUrl,
+    secret: secret
+  })
+})
+
 app.notFound((c) => c.json({ error: 'not_found' }, 404))
 app.onError((err, c) => {
   console.error(err)
