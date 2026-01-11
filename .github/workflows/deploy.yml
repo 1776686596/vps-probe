@@ -31,7 +31,7 @@ jobs:
           # Get database ID and update wrangler.toml
           DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="vps-probe") | .uuid')
           if [ -n "$DB_ID" ]; then
-            sed -i "s/# database_id will be auto-resolved.*/database_id = \"$DB_ID\"/" wrangler.toml
+            sed -i "s/PLACEHOLDER_D1_ID/$DB_ID/" wrangler.toml
           fi
 
       - name: Create KV Namespace
@@ -44,7 +44,7 @@ jobs:
           # Get KV ID and update wrangler.toml
           KV_ID=$(npx wrangler kv:namespace list --json | jq -r '.[] | select(.title | contains("STATUS_KV")) | .id' | head -1)
           if [ -n "$KV_ID" ]; then
-            sed -i "s/# id will be auto-resolved.*/id = \"$KV_ID\"/" wrangler.toml
+            sed -i "s/PLACEHOLDER_KV_ID/$KV_ID/" wrangler.toml
           fi
 
       - name: Init Database Schema

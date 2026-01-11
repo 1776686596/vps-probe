@@ -8,9 +8,8 @@ PROBE_STATUS_TTL_SECONDS = "120"
 [[d1_databases]]
 binding = "DB"
 database_name = "vps-probe"
-# database_id will be auto-resolved by wrangler from database_name
+database_id = "PLACEHOLDER_D1_ID"
 
 [[kv_namespaces]]
 binding = "STATUS_KV"
-title = "vps-probe-status-kv"
-# id will be auto-resolved by wrangler from title
+id = "PLACEHOLDER_KV_ID"
