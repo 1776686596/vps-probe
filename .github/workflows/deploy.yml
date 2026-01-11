@@ -27,24 +27,30 @@ jobs:
 
       - name: Setup D1 Database
         id: setup-d1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           cd server
           # Create database (ignore if exists)
           npx wrangler d1 create vps-probe 2>&1 || true
-          # Always get ID from list
-          DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="vps-probe") | .uuid')
+          # Get ID from list
+          DB_ID=$(npx wrangler d1 list 2>&1 | grep vps-probe | awk '{print $1}')
           echo "db_id=$DB_ID" >> $GITHUB_OUTPUT
           echo "Database ID: $DB_ID"
           npx wrangler d1 execute vps-probe --remote --file=schema.sql --yes || true
 
       - name: Setup KV Namespace
         id: setup-kv
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           cd server
           # Create namespace (ignore if exists)
           npx wrangler kv:namespace create STATUS_KV 2>&1 || true
-          # Always get ID from list - look for title containing STATUS_KV
-          KV_ID=$(npx wrangler kv:namespace list --json | jq -r '.[] | select(.title | test("STATUS_KV")) | .id')
+          # Get ID from list
+          KV_ID=$(npx wrangler kv:namespace list 2>&1 | grep STATUS_KV | awk '{print $1}')
           echo "kv_id=$KV_ID" >> $GITHUB_OUTPUT
           echo "KV ID: $KV_ID"
 
@@ -75,6 +81,9 @@ jobs:
 
       - name: Setup HMAC Secret
         id: setup-secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           cd server
           SECRET=$(openssl rand -hex 32)
@@ -83,6 +92,9 @@ jobs:
 
       - name: Deploy Worker
         id: deploy-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           cd server
           DEPLOY_OUTPUT=$(npx wrangler deploy 2>&1)
@@ -99,6 +111,9 @@ jobs:
 
       - name: Deploy Dashboard
         id: deploy-pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           cd dashboard
           npx wrangler pages project create vps-probe-dashboard --production-branch main 2>/dev/null || true
