@@ -21,6 +21,32 @@ jobs:
       - name: Install server dependencies
         run: cd server && npm ci
 
+      - name: Create D1 Database
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cd server
+          npx wrangler d1 create vps-probe 2>/dev/null || echo "Database already exists"
+          # Get database ID and update wrangler.toml
+          DB_ID=$(npx wrangler d1 list --json | jq -r '.[] | select(.name=="vps-probe") | .uuid')
+          if [ -n "$DB_ID" ]; then
+            sed -i "s/# database_id will be auto-resolved.*/database_id = \"$DB_ID\"/" wrangler.toml
+          fi
+
+      - name: Create KV Namespace
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cd server
+          npx wrangler kv:namespace create STATUS_KV 2>/dev/null || echo "KV namespace already exists"
+          # Get KV ID and update wrangler.toml
+          KV_ID=$(npx wrangler kv:namespace list --json | jq -r '.[] | select(.title | contains("STATUS_KV")) | .id' | head -1)
+          if [ -n "$KV_ID" ]; then
+            sed -i "s/# id will be auto-resolved.*/id = \"$KV_ID\"/" wrangler.toml
+          fi
+
       - name: Init Database Schema
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
