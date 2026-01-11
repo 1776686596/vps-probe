@@ -5,10 +5,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -25,59 +21,13 @@ jobs:
       - name: Install server dependencies
         run: cd server && npm ci
 
-      - name: Setup D1 Database
-        id: setup-d1
+      - name: Init Database Schema
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           cd server
-          # Create database (ignore if exists)
-          npx wrangler d1 create vps-probe 2>&1 || true
-          # Get ID from list
-          DB_ID=$(npx wrangler d1 list 2>&1 | grep vps-probe | awk '{print $1}')
-          echo "db_id=$DB_ID" >> $GITHUB_OUTPUT
-          echo "Database ID: $DB_ID"
           npx wrangler d1 execute vps-probe --remote --file=schema.sql --yes || true
-
-      - name: Setup KV Namespace
-        id: setup-kv
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-        run: |
-          cd server
-          # Create namespace (ignore if exists)
-          npx wrangler kv:namespace create STATUS_KV 2>&1 || true
-          # Get ID from list
-          KV_ID=$(npx wrangler kv:namespace list 2>&1 | grep STATUS_KV | awk '{print $1}')
-          echo "kv_id=$KV_ID" >> $GITHUB_OUTPUT
-          echo "KV ID: $KV_ID"
-
-      - name: Generate wrangler.toml
-        env:
-          DB_ID: ${{ steps.setup-d1.outputs.db_id }}
-          KV_ID: ${{ steps.setup-kv.outputs.kv_id }}
-        run: |
-          cat > server/wrangler.toml << EOF
-          name = "vps-probe"
-          main = "src/index.ts"
-          compatibility_date = "2024-01-01"
-
-          [vars]
-          PROBE_STATUS_TTL_SECONDS = "120"
-
-          [[d1_databases]]
-          binding = "DB"
-          database_name = "vps-probe"
-          database_id = "${DB_ID}"
-
-          [[kv_namespaces]]
-          binding = "STATUS_KV"
-          id = "${KV_ID}"
-          EOF
-          sed -i 's/^          //' server/wrangler.toml
-          cat server/wrangler.toml
 
       - name: Setup HMAC Secret
         id: setup-secret
