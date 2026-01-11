@@ -36,9 +36,9 @@ export default function NodeDetail() {
           <div className="rounded-xl border border-zinc-800 bg-zinc-800/50 p-6">
             <h2 className="mb-4 text-lg font-semibold text-zinc-200">Current Status</h2>
             <div className="space-y-6">
-              <ProgressBar label="CPU" value={node.cpu} color="bg-red-500" />
-              <ProgressBar label="Memory" value={node.memory} color="bg-blue-500" />
-              <ProgressBar label="Disk" value={node.disk} color="bg-purple-500" />
+              <ProgressBar label="CPU" value={node.cpu} />
+              <ProgressBar label="Memory" value={node.memory} />
+              <ProgressBar label="Disk" value={node.disk} />
             </div>
           </div>
 
