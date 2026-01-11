@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.serena/
+*.log
+.DS_Store
+.env
+.env.local
+releases/
+agent/vps-probe-agent

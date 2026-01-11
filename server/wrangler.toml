@@ -1,0 +1,15 @@
+name = "vps-probe"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+PROBE_STATUS_TTL_SECONDS = "120"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vps-probe"
+database_id = "bcb46dbe-7bc1-44e0-a428-383a40ff4c53"
+
+[[kv_namespaces]]
+binding = "STATUS_KV"
+id = "9e663e0c0fd043068ae91a7323fe0079"
